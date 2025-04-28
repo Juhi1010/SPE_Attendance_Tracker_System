@@ -1,0 +1,46 @@
+# ========== Java / Spring Boot ==========
+/**/target/
+/**/*.log
+*.class
+*.jar
+*.war
+*.ear
+
+# ========== Node.js / React ==========
+/**/node_modules/
+/**/build/
+/**/dist/
+/**/.env
+
+# ========== Python / Flask (Face Recognition Service) ==========
+/**/myenv/
+/**/__pycache__/
+/**/*.pyc
+/**/.pytest_cache/
+
+# ========== Docker ==========
+**/docker-compose.override.yml
+**/.docker/
+
+# ========== Kubernetes ==========
+**/*.yaml
+**/*.yml
+
+# ========== Ansible ==========
+**/*.retry
+
+# ========== System/IDE files ==========
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ========== Logs and temp ==========
+*.log
+tmp/
+temp/
+
+# ========== Misc ==========
+.env
+*.iml
+*.bak

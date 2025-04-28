@@ -1,0 +1,66 @@
+.dashboard-container {
+    max-width: 500px;
+    /* margin: 50px auto; */
+    margin-left: 10rem;
+    padding: 30px;
+    background-color: #ffffff;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .dashboard-title {
+    margin-bottom: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .input-field {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  
+  .generate-btn {
+    padding: 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .generate-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  .otp-display {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #ecf0f1;
+    border-radius: 10px;
+  }
+  
+  .otp-display h2 {
+    margin-bottom: 10px;
+    color: #34495e;
+  }
+  
+  .error-message {
+    margin-top: 20px;
+    color: red;
+    font-weight: bold;
+  }
+  

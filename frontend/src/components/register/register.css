@@ -1,0 +1,116 @@
+/* Main container */
+.register-container {
+    width: 100%;
+    max-width: 450px;
+    /* margin: 50px auto; */
+    margin-left: 39rem;
+    padding: 30px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+}
+
+/* Title */
+h2 {
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* Form styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Individual input fields and select */
+form div {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-weight: bold;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+/* Input fields */
+input, select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+/* File input styling */
+input[type="file"] {
+    padding: 5px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+}
+
+/* Submit button */
+button {
+    padding: 12px 0;
+    background-color: rgb(53, 163, 236);;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Error and success messages */
+.error {
+    color: #d9534f;
+    font-size: 14px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.success {
+    color: #5bc0de;
+    font-size: 14px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 500px) {
+    .register-container {
+        padding: 20px;
+        width: 90%;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    input, select {
+        font-size: 16px;
+    }
+
+    button {
+        font-size: 14px;
+    }
+}
