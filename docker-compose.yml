@@ -1,0 +1,160 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database
+  postgres:
+    image: postgres:13
+    container_name: postgres-container
+    environment:
+      POSTGRES_DB: attendance
+      POSTGRES_USER: juhirajani
+      POSTGRES_PASSWORD: juhi123
+    ports:
+      - "5432:5432"
+    networks:
+      - my-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "juhirajani", "-d", "attendance"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 2. Eureka Server (Server Registry)
+  server-registry:
+    image: server-registry:latest
+    container_name: server-registry
+    build:
+      context: ./Server_registry
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_APPLICATION_NAME: eureka-server
+    networks:
+      - my-network
+    depends_on:
+      - postgres
+    entrypoint: ["/usr/local/bin/wait-for-it.sh", "postgres:5432", "--timeout=60", "--", "java", "-jar", "/app/eureka-server.jar"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 3. Face Recognition Service
+  face-recognition-service:
+    build:
+      context: ./face-recognition-service
+    container_name: face-recognition-service
+    volumes:
+      - ./images:/app/images
+    ports:
+      - "5001:5001"
+    depends_on:
+      - postgres
+      - server-registry
+    networks:
+      - my-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:5001/health", "-T", "10"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    entrypoint: ["/usr/local/bin/wait-for-it.sh", "postgres:5432", "--timeout=60", "--", "/usr/local/bin/wait-for-it.sh", "server-registry:8761", "--timeout=60", "--", "python", "main.py"]
+
+  # 4. Attendance Service (Spring Boot)
+  attendance-service:
+    image: attendance-service:latest
+    container_name: attendance-service
+    build:
+      context: ./Attendance_service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - server-registry
+      - face-recognition-service
+    networks:
+      - my-network
+    restart: unless-stopped
+    entrypoint: ["/usr/local/bin/wait-for-it.sh", "postgres:5432", "--timeout=60", "--", "/usr/local/bin/wait-for-it.sh", "server-registry:8761", "--timeout=60", "--", "/usr/local/bin/wait-for-it.sh", "face-recognition-service:5001", "--timeout=60", "--", "java", "-jar", "/app/attendance-service.jar"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/attendance
+      SPRING_DATASOURCE_USERNAME: juhirajani
+      SPRING_DATASOURCE_PASSWORD: juhi123
+      SPRING_APPLICATION_NAME: attendance-service
+      EUREKA_CLIENT_SERVICE_URL: http://server-registry:8761/eureka
+
+  # 5. QR Code Attendance Service
+  qr-code-attendance:
+    image: qr-code-attendance:latest
+    container_name: qr-code-attendance
+    build:
+      context: ./QR_code_attendance
+    volumes:
+      - ./images:/app/images
+    ports:
+      - "8082:8082"
+    depends_on:
+      - attendance-service
+      - face-recognition-service
+      - server-registry
+      - postgres
+    networks:
+      - my-network
+    restart: unless-stopped
+    entrypoint: [
+      "/usr/local/bin/wait-for-it.sh", "postgres:5432", "--timeout=60", "--",
+      "/usr/local/bin/wait-for-it.sh", "server-registry:8761", "--timeout=60", "--",
+      "/usr/local/bin/wait-for-it.sh", "face-recognition-service:5001", "--timeout=60", "--",
+      "/usr/local/bin/wait-for-it.sh", "attendance-service:8083", "--timeout=60", "--",
+      "java", "-jar", "/app/qr-code-attendance.jar"
+    ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 6. Frontend Service
+  frontend:
+    image: frontend-app:latest
+    container_name: frontend
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - postgres
+      - server-registry
+      - face-recognition-service
+      - attendance-service
+      - qr-code-attendance
+    networks:
+      - my-network
+    restart: unless-stopped
+    entrypoint: [
+      "/usr/local/bin/wait-for-it.sh", "server-registry:8761", "--timeout=90", "--strict", "--",
+      "/usr/local/bin/wait-for-it.sh", "postgres:5432", "--timeout=90", "--strict", "--",
+      "/usr/local/bin/wait-for-it.sh", "face-recognition-service:5001", "--timeout=90", "--strict", "--",
+      "/usr/local/bin/wait-for-it.sh", "attendance-service:8083", "--timeout=90", "--strict", "--",
+      "/usr/local/bin/wait-for-it.sh", "qr-code-attendance:8082", "--timeout=90", "--strict", "--",
+      "nginx", "-g", "daemon off;"
+    ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  my-network:
+    driver: bridge
+
