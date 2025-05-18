@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: attendance-service
+  namespace: qr-attendance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: attendance-service
+  template:
+    metadata:
+      labels:
+        app: attendance-service
+    spec:
+      containers:
+        - name: attendance
+          image: juhir10/attendance-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /app/images
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-service.qr-attendance.svc.cluster.local:5432/attendance
+            - name: SPRING_DATASOURCE_USERNAME
+              value: juhirajani
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: juhi123
+            - name: SPRING_APPLICATION_NAME
+              value: attendance-service
+            - name: EUREKA_CLIENT_SERVICE_URL
+              value: http://server-registry-service.qr-attendance.svc.cluster.local:8761/eureka
+          command: [
+            "/usr/local/bin/wait-for-it.sh",
+            "postgres-service.qr-attendance.svc.cluster.local:5432",
+            "--timeout=60",
+            "--",
+            "/usr/local/bin/wait-for-it.sh",
+            "server-registry-service.qr-attendance.svc.cluster.local:8761",
+            "--timeout=60",
+            "--",
+            "/usr/local/bin/wait-for-it.sh",
+            "face-recognition-service.qr-attendance.svc.cluster.local:5001",
+            "--timeout=60",
+            "--",
+            "java", "-jar", "/app/attendance-service.jar"
+          ]
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: shared-pvc

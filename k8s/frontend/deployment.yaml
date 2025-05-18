@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: qr-attendance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: juhir10/frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          command: ["/bin/bash", "-c"]
+          args:
+            - >
+              /usr/local/bin/wait-for-it.sh server-registry-service.qr-attendance.svc.cluster.local:8761 --timeout=90 --strict -- 
+              && /usr/local/bin/wait-for-it.sh postgres-service.qr-attendance.svc.cluster.local:5432 --timeout=90 --strict -- 
+              && /usr/local/bin/wait-for-it.sh face-recognition-service.qr-attendance.svc.cluster.local:5001 --timeout=90 --strict -- 
+              && /usr/local/bin/wait-for-it.sh attendance-service.qr-attendance.svc.cluster.local:8083 --timeout=90 --strict -- 
+              && /usr/local/bin/wait-for-it.sh qr-code-attendance.qr-attendance.svc.cluster.local:8082 --timeout=90 --strict -- 
+              && nginx -g 'daemon off;'
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5

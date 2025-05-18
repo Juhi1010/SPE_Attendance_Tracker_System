@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-registry
+  namespace: qr-attendance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server-registry
+  template:
+    metadata:
+      labels:
+        app: server-registry
+    spec:
+      containers:
+        - name: server-registry
+          image: juhir10/server-registry:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8761
+          env:
+            - name: SPRING_APPLICATION_NAME
+              value: eureka-server
+          command: ["/usr/local/bin/wait-for-it.sh", "postgres-service.qr-attendance.svc.cluster.local:5432", "--timeout=60", "--", "java", "-jar", "eureka-server.jar"]
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+
+
+

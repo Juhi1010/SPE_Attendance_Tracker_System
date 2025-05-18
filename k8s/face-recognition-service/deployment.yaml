@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: face-recognition-service
+  namespace: qr-attendance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: face-recognition-service
+  template:
+    metadata:
+      labels:
+        app: face-recognition-service
+    spec:
+      containers:
+        - name: face-recognition
+          image: juhir10/face-recognition-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /app/images
+          command: [
+            "/usr/local/bin/wait-for-it.sh",
+            "postgres-service.qr-attendance.svc.cluster.local:5432",
+            "--timeout=60",
+            "--",
+            "/usr/local/bin/wait-for-it.sh",
+            "server-registry-service.qr-attendance.svc.cluster.local:8761",
+            "--timeout=60",
+            "--",
+            "python",
+            "main.py"
+          ]
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: shared-pvc
+
+
+
+
+
+

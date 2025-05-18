@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qr-code-attendance
+  namespace: qr-attendance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qr-code-attendance
+  template:
+    metadata:
+      labels:
+        app: qr-code-attendance
+    spec:
+      containers:
+        - name: qr-code-attendance
+          image: juhir10/qr-code-attendance:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /app/images
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-service.qr-attendance.svc.cluster.local:5432/attendance
+            - name: SPRING_DATASOURCE_USERNAME
+              value: juhirajani
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: juhi123
+            - name: SPRING_APPLICATION_NAME
+              value: qr-code-attendance
+            - name: EUREKA_CLIENT_SERVICE_URL
+              value: http://server-registry-service.qr-attendance.svc.cluster.local:8761/eureka
+          command: [
+            "/usr/local/bin/wait-for-it.sh", "postgres-service.qr-attendance.svc.cluster.local:5432", "--timeout=60", "--",
+            "/usr/local/bin/wait-for-it.sh", "server-registry-service.qr-attendance.svc.cluster.local:8761", "--timeout=60", "--",
+            "/usr/local/bin/wait-for-it.sh", "face-recognition-service.qr-attendance.svc.cluster.local:5001", "--timeout=60", "--",
+            "/usr/local/bin/wait-for-it.sh", "attendance-service.qr-attendance.svc.cluster.local:8083", "--timeout=60", "--",
+            "java", "-jar", "/app/qr-code-attendance.jar"
+          ]
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: shared-pvc
+
+
+
+
+
