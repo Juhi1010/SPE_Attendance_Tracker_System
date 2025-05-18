@@ -470,8 +470,9 @@ const MarkAttendance = () => {
 
 
     try {
+      const apiBase = import.meta.env.VITE_API_BASE_URL;
       const response = await axios.post(
-        'http://localhost:8082/api/users/scan', // Replace with the actual endpoint URL
+          `${apiBase}/api/users/scan`, // Replace with the actual endpoint URL
         formData,
         {
           headers: {

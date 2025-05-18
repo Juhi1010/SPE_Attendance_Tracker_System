@@ -44,3 +44,5 @@ temp/
 .env
 *.iml
 *.bak
+
+images/

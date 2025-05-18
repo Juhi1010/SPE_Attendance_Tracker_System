@@ -32,16 +32,20 @@ const Register = () => {
         formData.append('image', image);
 
         try {
-            const response = await fetch('http://localhost:8082/api/users/register', {
+            const apiBase = import.meta.env.VITE_API_BASE_URL;
+
+            const response = await fetch(`${apiBase}/api/users/register`, {
                 method: 'POST',
                 body: formData,
             });
 
             const result = await response.json();
+
             
             if (response.ok) {
                 setSuccess(`Registration successful! User ID: ${result.userid}`);
                 setError('');
+                console.log('Server Response:', result);
             } else {
                 setError(result.message || 'An error occurred during registration.');
                 setSuccess('');

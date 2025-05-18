@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import './lecturer.css'
 
@@ -20,7 +20,9 @@ function LecturerDashboard() {
             return;
         }
 
-      const response = await axios.post('http://localhost:8082/api/users/generate', {
+        const apiBase = import.meta.env.VITE_API_BASE_URL;
+
+        const response = await axios.post(`${apiBase}/api/users/generate`, {
         courseId,
         lecturerId
       }, {

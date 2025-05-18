@@ -94,7 +94,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Login.css';
+import './login.css';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -126,7 +126,8 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8082/api/users/login', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL;
+      const response = await fetch(`${apiBase}/api/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +154,7 @@ const Login: React.FC = () => {
           if (role === 'LECTURER') {
             navigate('/lecturer');
           } else if (role === 'STUDENT') {
-            navigate('/student');
+            navigate('/mark');
           } else {
             setError('Unknown role. Cannot redirect.');
           }

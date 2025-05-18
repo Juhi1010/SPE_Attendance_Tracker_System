@@ -14,7 +14,7 @@
 //       {/* <Login /> */}
 //       <Register />
 //     </div>
-      
+
 //     </>
 //   )
 // }
@@ -27,6 +27,7 @@ import Login from './components/login/Login'
 import Register from './components/register/Register'
 import LecturerDashboard from './components/lecturer/Lecturer';
 import StudentDashboard from './components/student/Student';
+
 
 const App = () => {
   return (
