@@ -7,7 +7,7 @@ pipeline {
         PROJECT_NAME = 'latest-spe'
         K8S_DIR = 'k8s'
         SECRETS_FILE = 'generate_secret.yaml'
-        ANSIBLE_VAULT_PASSWORD_ID = 'ansible-vault-password' // Add this to Jenkins credentials
+        ANSIBLE_VAULT_PASSWORD_ID = 'ansible-vault-password' // Jenkins credential ID
     }
 
     stages {
@@ -19,8 +19,7 @@ pipeline {
 
         stage('Docker Compose Build & Tag') {
             steps {
-              echo 'Build and tag'
-
+                echo 'Build and tag'
             }
         }
 
