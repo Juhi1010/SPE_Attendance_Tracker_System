@@ -13,36 +13,38 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
+                echo 'Clone'
             }
         }
 
         stage('Docker Compose Build & Tag') {
             steps {
+              echo 'Build and tag'
 
             }
         }
 
         stage('Push Images to Registry') {
             steps {
-
+                echo 'Push to registry'
             }
         }
 
         stage('Ansible Vault Decrypt') {
             steps {
-
+                echo 'vault'
             }
         }
 
         stage('Generate & Apply Kubernetes Secrets') {
             steps {
-
+                echo 'k8s'
             }
         }
 
         stage('Kubernetes Deployment') {
             steps {
-
+                echo 'deployment'
             }
         }
     }
