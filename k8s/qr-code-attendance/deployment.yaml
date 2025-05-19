@@ -26,9 +26,15 @@ spec:
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://postgres-service.qr-attendance.svc.cluster.local:5432/attendance
             - name: SPRING_DATASOURCE_USERNAME
-              value: juhirajani
+              valueFrom:
+                secretKeyRef:
+                  name: attendance-service-secret
+                  key: SPRING_DATASOURCE_USERNAME
             - name: SPRING_DATASOURCE_PASSWORD
-              value: juhi123
+              valueFrom:
+                secretKeyRef:
+                  name: attendance-service-secret
+                  key: SPRING_DATASOURCE_PASSWORD
             - name: SPRING_APPLICATION_NAME
               value: qr-code-attendance
             - name: EUREKA_CLIENT_SERVICE_URL
