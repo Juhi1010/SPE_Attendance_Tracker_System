@@ -6,14 +6,12 @@ pipeline {
         NAMESPACE = 'spe-final'
         DOCKER_CREDENTIALS = 'docker-credentials'
 
-        // Define image base names for each service
         QR_CODE_ATTENDANCE_IMAGE = "${DOCKER_REGISTRY}/qr-code-attendance"
         ATTENDANCE_SERVICE_IMAGE = "${DOCKER_REGISTRY}/attendance-service"
         FACE_RECOGNITION_IMAGE = "${DOCKER_REGISTRY}/face-recognition-service"
         EUREKA_SERVER_IMAGE = "${DOCKER_REGISTRY}/server-registry"
         FRONTEND_IMAGE = "${DOCKER_REGISTRY}/frontend"
 
-        // Tag to use for this build
         IMAGE_TAG = "build-${env.BUILD_NUMBER}"
     }
 
@@ -27,11 +25,11 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    docker.build("${QR_CODE_ATTENDANCE_IMAGE}:${IMAGE_TAG}", "./user-service")
-                    docker.build("${ATTENDANCE_SERVICE_IMAGE}:${IMAGE_TAG}", "./attendance-service")
-                    docker.build("${FACE_RECOGNITION_IMAGE}:${IMAGE_TAG}", "./face-recognition-service")
-                    docker.build("${EUREKA_SERVER_IMAGE}:${IMAGE_TAG}", "./eureka-server")
-                    docker.build("${FRONTEND_IMAGE}:${IMAGE_TAG}", "./qr-frontend")
+                    def qrImage = docker.build("${QR_CODE_ATTENDANCE_IMAGE}:${IMAGE_TAG}", "./user-service")
+                    def attImage = docker.build("${ATTENDANCE_SERVICE_IMAGE}:${IMAGE_TAG}", "./attendance-service")
+                    def faceImage = docker.build("${FACE_RECOGNITION_IMAGE}:${IMAGE_TAG}", "./face-recognition-service")
+                    def eurekaImage = docker.build("${EUREKA_SERVER_IMAGE}:${IMAGE_TAG}", "./eureka-server")
+                    def frontendImage = docker.build("${FRONTEND_IMAGE}:${IMAGE_TAG}", "./qr-frontend")
                 }
             }
         }
@@ -58,7 +56,7 @@ pipeline {
                         [name: 'attendance-service', image: ATTENDANCE_SERVICE_IMAGE],
                         [name: 'face-recognition-service', image: FACE_RECOGNITION_IMAGE],
                         [name: 'eureka-server-deployment', image: EUREKA_SERVER_IMAGE],
-                        [name: 'frontend', image: FRONTEND_IMAGE],
+                        [name: 'frontend', image: FRONTEND_IMAGE]
                     ]
                     services.each { svc ->
                         sh """
@@ -103,7 +101,6 @@ pipeline {
                     export KUBECONFIG=$HOME/.kube/config
                     kubectl get pods --namespace ${NAMESPACE}
                     kubectl describe pods --namespace ${NAMESPACE}
-                    # Optionally, fetch logs for failed pods here
                 '''
             }
         }
@@ -113,5 +110,3 @@ pipeline {
         }
     }
 }
-
-
