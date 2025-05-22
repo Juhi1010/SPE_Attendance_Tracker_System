@@ -24,29 +24,26 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                script {
-                    def qrImage = docker.build("${QR_CODE_ATTENDANCE_IMAGE}:${IMAGE_TAG}", "./user-service")
-                    def attImage = docker.build("${ATTENDANCE_SERVICE_IMAGE}:${IMAGE_TAG}", "./attendance-service")
-                    def faceImage = docker.build("${FACE_RECOGNITION_IMAGE}:${IMAGE_TAG}", "./face-recognition-service")
-                    def eurekaImage = docker.build("${EUREKA_SERVER_IMAGE}:${IMAGE_TAG}", "./eureka-server")
-                    def frontendImage = docker.build("${FRONTEND_IMAGE}:${IMAGE_TAG}", "./qr-frontend")
-                }
+                sh "docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:${IMAGE_TAG} ./user-service"
+                sh "docker build -t ${ATTENDANCE_SERVICE_IMAGE}:${IMAGE_TAG} ./attendance-service"
+                sh "docker build -t ${FACE_RECOGNITION_IMAGE}:${IMAGE_TAG} ./face-recognition-service"
+                sh "docker build -t ${EUREKA_SERVER_IMAGE}:${IMAGE_TAG} ./eureka-server"
+                sh "docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} ./qr-frontend"
             }
         }
-
         stage('Push Docker Images') {
             steps {
-                script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", DOCKER_CREDENTIALS) {
-                        docker.image("${QR_CODE_ATTENDANCE_IMAGE}:${IMAGE_TAG}").push()
-                        docker.image("${ATTENDANCE_SERVICE_IMAGE}:${IMAGE_TAG}").push()
-                        docker.image("${FACE_RECOGNITION_IMAGE}:${IMAGE_TAG}").push()
-                        docker.image("${EUREKA_SERVER_IMAGE}:${IMAGE_TAG}").push()
-                        docker.image("${FRONTEND_IMAGE}:${IMAGE_TAG}").push()
-                    }
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${QR_CODE_ATTENDANCE_IMAGE}:${IMAGE_TAG}
+                        docker push ${ATTENDANCE_SERVICE_IMAGE}:${IMAGE_TAG}
+                        docker push ${FACE_RECOGNITION_IMAGE}:${IMAGE_TAG}
+                        docker push ${EUREKA_SERVER_IMAGE}:${IMAGE_TAG}
+                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
+                    """
                 }
             }
-        }
 
         stage('Update Kubernetes Manifests with New Image Tags') {
             steps {
