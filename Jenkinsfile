@@ -1,71 +1,9 @@
-// pipeline {
-//     agent any
-//
-//     environment {
-//         DOCKER_REGISTRY = 'docker.io/juhir10'
-//         DOCKER_CREDENTIALS_ID = 'docker-credentials'
-//         PROJECT_NAME = 'latest-spe'
-//         K8S_DIR = 'k8s'
-//         SECRETS_FILE = 'generate_secret.yaml'
-//         ANSIBLE_VAULT_PASSWORD_ID = 'ansible-vault-password' // Jenkins credential ID
-//     }
-//
-//     stages {
-//         stage('Clone Repository') {
-//             steps {
-//                 echo 'Clone'
-//             }
-//         }
-//
-//         stage('Docker Compose Build & Tag') {
-//             steps {
-//                 echo 'Build and tag'
-//             }
-//         }
-//
-//         stage('Push Images to Registry') {
-//             steps {
-//                 echo 'Push to registry'
-//             }
-//         }
-//
-//         stage('Ansible Vault Decrypt') {
-//             steps {
-//                 echo 'vault'
-//             }
-//         }
-//
-//         stage('Generate & Apply Kubernetes Secrets') {
-//             steps {
-//                 echo 'k8s'
-//             }
-//         }
-//
-//         stage('Kubernetes Deployment') {
-//             steps {
-//                 echo 'deployment'
-//             }
-//         }
-//     }
-//
-//     post {
-//         success {
-//             echo 'CI/CD pipeline completed successfully!'
-//         }
-//         failure {
-//             echo 'Something went wrong in the pipeline.'
-//         }
-//     }
-// }
-
-
 pipeline {
     agent any
 
     environment {
         DOCKER_REGISTRY = 'docker.io/juhir10'
         NAMESPACE = 'spe-final'
-//         KUBE_CONFIG_CREDENTIALS = 'kubeconfig-id'
         DOCKER_CREDENTIALS = 'docker-credentials'
 
         // Define image base names for each service
@@ -80,13 +18,12 @@ pipeline {
 
     stages {
 
-        stages {
-            stage('Git Clone') {
-                steps {
-                    // Clones your repo to the Jenkins workspace
-                    git branch: 'test-all', url: 'https://github.com/Juhi1010/SPE_Attendance_Tracker_System.git'
-                }
+        stage('Git Clone') {
+            steps {
+                // Clones your repo to the Jenkins workspace
+                git branch: 'test-all', url: 'https://github.com/Juhi1010/SPE_Attendance_Tracker_System.git'
         }
+
 
         stage('Build Docker Images') {
             steps {
@@ -160,7 +97,6 @@ pipeline {
                }
            }
        }
-    }
 
     post {
         failure {
@@ -179,5 +115,7 @@ pipeline {
         success {
             echo "Pipeline success"
         }
+    }
+   }
 }
 
