@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: attendance-service
-  namespace: qr-attendance
+  namespace: spe-final
 spec:
   replicas: 1
   selector:
@@ -13,48 +13,62 @@ spec:
       labels:
         app: attendance-service
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox
+          command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo "Waiting for Postgres..."; sleep 5; done']
+        - name: wait-for-eureka
+          image: busybox
+          command: ['sh', '-c', 'until nc -z server-registry 8761; do echo "Waiting for Eureka..."; sleep 5; done']
+        - name: wait-for-face
+          image: busybox
+          command: ['sh', '-c', 'until nc -z face-recognition-service 5001; do echo "Waiting for Face Recognition..."; sleep 5; done']
+        - name: fix-permissions
+          image: busybox
+          command: [ "sh", "-c", "chmod -R 777 /app/images" ]
+          volumeMounts:
+            - name: images-volume
+              mountPath: /app/images
       containers:
-        - name: attendance
+        - name: attendance-service
           image: juhir10/attendance-service:latest
-          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8083
-          volumeMounts:
-            - name: shared-volume
-              mountPath: /app/images
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres-service.qr-attendance.svc.cluster.local:5432/attendance
+              value: jdbc:postgresql://postgres-service:5432/attendance
             - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: attendance-service-secret
-                  key: SPRING_DATASOURCE_USERNAME
+              value: juhirajani
             - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: attendance-service-secret
-                  key: SPRING_DATASOURCE_PASSWORD
-            - name: SPRING_APPLICATION_NAME
-              value: attendance-service
-            - name: EUREKA_CLIENT_SERVICE_URL
-              value: http://server-registry-service.qr-attendance.svc.cluster.local:8761/eureka
-          command: [
-            "/usr/local/bin/wait-for-it.sh",
-            "postgres-service.qr-attendance.svc.cluster.local:5432",
-            "--timeout=60",
-            "--",
-            "/usr/local/bin/wait-for-it.sh",
-            "server-registry-service.qr-attendance.svc.cluster.local:8761",
-            "--timeout=60",
-            "--",
-            "/usr/local/bin/wait-for-it.sh",
-            "face-recognition-service.qr-attendance.svc.cluster.local:5001",
-            "--timeout=60",
-            "--",
-            "java", "-jar", "/app/attendance-service.jar"
-          ]
+              value: juhi123
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://server-registry:8761/eureka
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 150
+            periodSeconds: 20
+            failureThreshold: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: images-volume
+              mountPath: /app/images
       volumes:
-        - name: shared-volume
+        - name: images-volume
           persistentVolumeClaim:
             claimName: shared-pvc
+

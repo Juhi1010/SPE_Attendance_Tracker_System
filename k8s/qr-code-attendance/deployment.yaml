@@ -1,8 +1,136 @@
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: qr-code-attendance
+#  namespace: spe-final
+#spec:
+#  replicas: 1
+#  selector:
+#    matchLabels:
+#      app: qr-code-attendance
+#  template:
+#    metadata:
+#      labels:
+#        app: qr-code-attendance
+#    spec:
+#      initContainers:
+#        - name: wait-for-dependencies
+#          image: busybox:1.28
+#          command: ['sh', '-c', '
+#            until nc -z server-registry.spe-final.svc.cluster.local 8761 &&
+#                  nc -z face-recognition-service.spe-final.svc.cluster.local 5001 &&
+#                  nc -z postgres-service.spe-final.svc.cluster.local 5432 &&
+#                  nc -z attendance-service.spe-final.svc.cluster.local 8083;
+#            do
+#              echo "Waiting for dependent services...";
+#              sleep 5;
+#            done
+#          ']
+#      containers:
+#        - name: qr-code-attendance
+#          image: juhir10/qr-code-attendance:latest
+#          ports:
+#            - containerPort: 8082
+#          env:
+#            - name: SPRING_DATASOURCE_URL
+#              value: jdbc:postgresql://postgres-service:5432/attendance
+#            - name: SPRING_DATASOURCE_USERNAME
+#              value: juhirajani
+#            - name: SPRING_DATASOURCE_PASSWORD
+#              value: juhi123
+#            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+#              value: http://server-registry:8761/eureka
+#          readinessProbe:
+#            tcpSocket:
+#              port: 8082
+#            initialDelaySeconds: 120
+#            periodSeconds: 5
+#          livenessProbe:
+#            tcpSocket:
+#              port: 8082
+#            initialDelaySeconds: 150
+#            periodSeconds: 10
+
+
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: qr-code-attendance
+#  namespace: spe-final
+#spec:
+#  replicas: 1
+#  selector:
+#    matchLabels:
+#      app: qr-code-attendance
+#  template:
+#    metadata:
+#      labels:
+#        app: qr-code-attendance
+#    spec:
+#      initContainers:
+#        - name: wait-for-dependencies
+#          image: busybox:1.28
+#          command:
+#            - sh
+#            - -c
+#            - |
+#              until nc -z server-registry.spe-final.svc.cluster.local 8761 && \
+#                    nc -z face-recognition-service.spe-final.svc.cluster.local 5001 && \
+#                    nc -z postgres-service.spe-final.svc.cluster.local 5432 && \
+#                    nc -z attendance-service.spe-final.svc.cluster.local 8083; do
+#                echo "Waiting for dependent services..."
+#                sleep 5
+#              done
+#      containers:
+#        - name: qr-code-attendance
+#          image: juhir10/qr-code-attendance:latest
+#          imagePullPolicy: Always
+#          ports:
+#            - containerPort: 8082
+#          env:
+#            - name: SPRING_DATASOURCE_URL
+#              value: jdbc:postgresql://postgres-service:5432/attendance
+#            - name: SPRING_DATASOURCE_USERNAME
+#              value: juhirajani
+#            - name: SPRING_DATASOURCE_PASSWORD
+#              value: juhi123
+#            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+#              value: http://server-registry:8761/eureka
+#          readinessProbe:
+#            tcpSocket:
+#              port: 8082
+#            initialDelaySeconds: 120
+#            periodSeconds: 5
+#          livenessProbe:
+#            tcpSocket:
+#              port: 8082
+#            initialDelaySeconds: 150
+#            periodSeconds: 10
+#          securityContext:
+#            runAsNonRoot: true
+#            runAsUser: 1000
+#            allowPrivilegeEscalation: false
+#          resources:
+#            limits:
+#              memory: "512Mi"
+#              cpu: "500m"
+#            requests:
+#              memory: "256Mi"
+#              cpu: "250m"
+#          volumeMounts:
+#            - name: images-volume
+#              mountPath: /app/images
+#      volumes:
+#        - name: images-volume
+#          persistentVolumeClaim:
+#            claimName: shared-pvc
+
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: qr-code-attendance
-  namespace: qr-attendance
+  namespace: spe-final
 spec:
   replicas: 1
   selector:
@@ -13,49 +141,67 @@ spec:
       labels:
         app: qr-code-attendance
     spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: busybox:1.28
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z server-registry.spe-final.svc.cluster.local 8761 && \
+                    nc -z face-recognition-service.spe-final.svc.cluster.local 5001 && \
+                    nc -z postgres-service.spe-final.svc.cluster.local 5432 && \
+                    nc -z attendance-service.spe-final.svc.cluster.local 8083; do
+                echo "Waiting for dependent services..."
+                sleep 5
+              done
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chmod -R 777 /app/images"]
+          volumeMounts:
+            - name: images-volume
+              mountPath: /app/images
       containers:
         - name: qr-code-attendance
           image: juhir10/qr-code-attendance:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8082
-          volumeMounts:
-            - name: shared-volume
-              mountPath: /app/images
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres-service.qr-attendance.svc.cluster.local:5432/attendance
+              value: jdbc:postgresql://postgres-service:5432/attendance
             - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: attendance-service-secret
-                  key: SPRING_DATASOURCE_USERNAME
+              value: juhirajani
             - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: attendance-service-secret
-                  key: SPRING_DATASOURCE_PASSWORD
-            - name: SPRING_APPLICATION_NAME
-              value: qr-code-attendance
-            - name: EUREKA_CLIENT_SERVICE_URL
-              value: http://server-registry-service.qr-attendance.svc.cluster.local:8761/eureka
-          command: [
-            "/usr/local/bin/wait-for-it.sh", "postgres-service.qr-attendance.svc.cluster.local:5432", "--timeout=60", "--",
-            "/usr/local/bin/wait-for-it.sh", "server-registry-service.qr-attendance.svc.cluster.local:8761", "--timeout=60", "--",
-            "/usr/local/bin/wait-for-it.sh", "face-recognition-service.qr-attendance.svc.cluster.local:5001", "--timeout=60", "--",
-            "/usr/local/bin/wait-for-it.sh", "attendance-service.qr-attendance.svc.cluster.local:8083", "--timeout=60", "--",
-            "java", "-jar", "/app/qr-code-attendance.jar"
-          ]
+              value: juhi123
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://server-registry:8761/eureka
           readinessProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: 8082
-            initialDelaySeconds: 20
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 5
+            initialDelaySeconds: 120
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 150
+            periodSeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          volumeMounts:
+            - name: images-volume
+              mountPath: /app/images
       volumes:
-        - name: shared-volume
+        - name: images-volume
           persistentVolumeClaim:
             claimName: shared-pvc
 

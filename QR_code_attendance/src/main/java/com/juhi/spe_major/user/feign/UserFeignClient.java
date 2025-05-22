@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
-@FeignClient("ATTENDANCE-SERVICE")
+//@FeignClient("ATTENDANCE-SERVICE")
+@FeignClient(name = "attendance-service", url = "http://attendance-service:8083")
 public interface UserFeignClient {
     @PostMapping("/api/qrcodes/generate")
     public ResponseEntity<QRCodeResponse> generateQRCode(@RequestBody QRCodeRequest request);

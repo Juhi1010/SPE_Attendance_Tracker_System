@@ -72,6 +72,7 @@ public class UserService  {
 
                 String fileName = savedUser.getUserid() + ".jpg";
                 String imageDirPath = "/app/images";
+
 //                Path imagePath = Paths.get(imageDirPath, fileName);
 //                Files.write(imagePath, imageBytes); // or your image save logic
 

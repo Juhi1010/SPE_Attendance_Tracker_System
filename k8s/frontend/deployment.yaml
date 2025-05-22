@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: qr-attendance
+  namespace: spe-final
 spec:
   replicas: 1
   selector:
@@ -13,26 +13,66 @@ spec:
       labels:
         app: frontend
     spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: busybox:1.28
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z server-registry.spe-final.svc.cluster.local 8761 && \
+                    nc -z face-recognition-service.spe-final.svc.cluster.local 5001 && \
+                    nc -z postgres-service.spe-final.svc.cluster.local 5432 && \
+                    nc -z attendance-service.spe-final.svc.cluster.local 8083 && \
+                    nc -z qr-code-attendance.spe-final.svc.cluster.local 8082; do
+                echo "Waiting for dependent services..."
+                sleep 5
+              done
+#      initContainers:
+#        - name: wait-for-eureka
+#          image: busybox
+#          command: ['sh', '-c', 'until nslookup server-registry.spe-final.svc.cluster.local:8761; do echo waiting for eureka-server; sleep 5; done']
+#
+#        - name: wait-for-face-recognition
+#          image: busybox
+#          command: ['sh', '-c', 'until nslookup face-recognition-service.spe-final.svc.cluster.local:5001; do echo waiting for face-recognition; sleep 5; done']
+#
+#        - name: wait-for-postgres
+#          image: busybox
+#          command: ['sh', '-c', 'until nslookup postgres-service.spe-final.svc.cluster.local:5432; do echo waiting for postgres; sleep 5; done']
+#
+#        - name: wait-for-attendance
+#          image: busybox
+#          command: ['sh', '-c', 'until nslookup attendance-service.spe-final.svc.cluster.local:8083; do echo waiting for attendance service; sleep 5; done']
+#
+#        - name: wait-for-qr
+#          image: busybox
+#          command: ['sh', '-c', 'until nslookup qr-code-attendance.spe-final.svc.cluster.local:8082; do echo waiting for qr code service; sleep 5; done']
+
       containers:
         - name: frontend
           image: juhir10/frontend:latest
-          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
-          command: ["/bin/bash", "-c"]
-          args:
-            - >
-              /usr/local/bin/wait-for-it.sh server-registry-service.qr-attendance.svc.cluster.local:8761 --timeout=90 --strict -- 
-              && /usr/local/bin/wait-for-it.sh postgres-service.qr-attendance.svc.cluster.local:5432 --timeout=90 --strict -- 
-              && /usr/local/bin/wait-for-it.sh face-recognition-service.qr-attendance.svc.cluster.local:5001 --timeout=90 --strict -- 
-              && /usr/local/bin/wait-for-it.sh attendance-service.qr-attendance.svc.cluster.local:8083 --timeout=90 --strict -- 
-              && /usr/local/bin/wait-for-it.sh qr-code-attendance.qr-attendance.svc.cluster.local:8082 --timeout=90 --strict -- 
-              && nginx -g 'daemon off;'
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /
               port: 80
-            initialDelaySeconds: 20
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 5
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: images-volume
+              mountPath: /app/images
+      volumes:
+        - name: images-volume
+          persistentVolumeClaim:
+            claimName: shared-pvc
+
