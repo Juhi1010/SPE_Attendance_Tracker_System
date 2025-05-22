@@ -31,6 +31,7 @@ pipeline {
                 sh "docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} ./qr-frontend"
             }
         }
+
         stage('Push Docker Images') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
@@ -44,6 +45,7 @@ pipeline {
                     """
                 }
             }
+        }
 
         stage('Update Kubernetes Manifests with New Image Tags') {
             steps {
