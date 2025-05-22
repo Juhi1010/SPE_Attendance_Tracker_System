@@ -12,18 +12,17 @@ pipeline {
         FACE_RECOGNITION_IMAGE = "${DOCKER_REGISTRY}/face-recognition-service"
         EUREKA_SERVER_IMAGE = "${DOCKER_REGISTRY}/server-registry"
         FRONTEND_IMAGE = "${DOCKER_REGISTRY}/frontend"
+
         // Tag to use for this build
         IMAGE_TAG = "build-${env.BUILD_NUMBER}"
     }
 
     stages {
-
         stage('Git Clone') {
             steps {
-                // Clones your repo to the Jenkins workspace
                 git branch: 'test-all', url: 'https://github.com/Juhi1010/SPE_Attendance_Tracker_System.git'
+            }
         }
-
 
         stage('Build Docker Images') {
             steps {
@@ -60,9 +59,7 @@ pipeline {
                         [name: 'face-recognition-service', image: FACE_RECOGNITION_IMAGE],
                         [name: 'eureka-server-deployment', image: EUREKA_SERVER_IMAGE],
                         [name: 'frontend', image: FRONTEND_IMAGE],
-//                         [name: 'postgres-deployment']
                     ]
-
                     services.each { svc ->
                         sh """
                             sed -i 's|image: ${svc.image}:.*|image: ${svc.image}:${IMAGE_TAG}|g' k8s/${svc.name}-deployment.yaml
@@ -72,50 +69,49 @@ pipeline {
             }
         }
 
-       stage('Deploy to Kubernetes') {
-           steps {
-               script {
-                   // Set KUBECONFIG env var explicitly to local kubeconfig path
-                   sh """
-                       export KUBECONFIG=$HOME/.kube/config
-                       kubectl apply -f k8s/ --namespace ${NAMESPACE}
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    sh """
+                        export KUBECONFIG=$HOME/.kube/config
+                        kubectl apply -f k8s/ --namespace ${NAMESPACE}
 
-                       deployments=(
-                           "eureka-server-deployment"
-                           "postgres-deployment"
-                           "face-recognition-service"
-                           "attendance-service"
-                           "qr-code-attendance"
-                           "frontend"
-                       )
+                        deployments=(
+                            "eureka-server-deployment"
+                            "postgres-deployment"
+                            "face-recognition-service"
+                            "attendance-service"
+                            "qr-code-attendance"
+                            "frontend"
+                        )
 
-                       for deploy in "\${deployments[@]}"; do
-                           echo "Waiting for rollout of deployment/\${deploy} in namespace ${NAMESPACE}"
-                           kubectl rollout status deployment/\${deploy} --namespace ${NAMESPACE} --timeout=180s
-                       done
-                   """
-               }
-           }
-       }
+                        for deploy in "\${deployments[@]}"; do
+                            echo "Waiting for rollout of deployment/\${deploy} in namespace ${NAMESPACE}"
+                            kubectl rollout status deployment/\${deploy} --namespace ${NAMESPACE} --timeout=180s
+                        done
+                    """
+                }
+            }
+        }
+    }
 
     post {
         failure {
             echo "Deployment failed! Fetching pod info for debugging..."
             script {
-                // Export kubeconfig path pointing to your local minikube config
                 sh '''
-                  export KUBECONFIG=$HOME/.kube/config
-                  kubectl get pods --namespace ${NAMESPACE}
-                  kubectl describe pods --namespace ${NAMESPACE}
-                  # Optionally, fetch logs for failed pods here
+                    export KUBECONFIG=$HOME/.kube/config
+                    kubectl get pods --namespace ${NAMESPACE}
+                    kubectl describe pods --namespace ${NAMESPACE}
+                    # Optionally, fetch logs for failed pods here
                 '''
             }
         }
-    }
+
         success {
             echo "Pipeline success"
         }
     }
-   }
 }
+
 
