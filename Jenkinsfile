@@ -25,7 +25,7 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 sh "docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:${IMAGE_TAG} ./QR_code_attendance"
-                sh "docker build -t ${ATTENDANCE_SERVICE_IMAGE}:${IMAGE_TAG} ./Attendance-service"
+                sh "docker build -t ${ATTENDANCE_SERVICE_IMAGE}:${IMAGE_TAG} ./Attendance_service"
                 sh "docker build -t ${FACE_RECOGNITION_IMAGE}:${IMAGE_TAG} ./face-recognition-service"
                 sh "docker build -t ${EUREKA_SERVER_IMAGE}:${IMAGE_TAG} ./Server_registry"
                 sh "docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} ./frontend"
