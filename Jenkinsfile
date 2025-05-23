@@ -20,50 +20,172 @@ pipeline {
             }
         }
 
-        stage('Docker Login') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    script {
-                        sh '''
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        '''
-                    }
-                }
-            }
-        }
+        stage('Docker Login & Network Fix') {
+                    steps {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            script {
+                                sh '''
+                                    # Clear Docker cache
+                                    docker system prune -f || true
+                                    docker buildx prune -f || true
 
-        stage('Build Docker Images') {
-            steps {
-                sh "docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:latest ./QR_code_attendance"
-                sh "docker build -t ${ATTENDANCE_SERVICE_IMAGE}:latest ./Attendance_service"
-                sh "docker build -t ${FACE_RECOGNITION_IMAGE}:latest ./face-recognition-service"
-                sh "docker build -t ${EUREKA_SERVER_IMAGE}:latest ./Server_registry"
-                sh "docker build -t ${FRONTEND_IMAGE}:latest ./frontend"
-            }
-        }
+                                    # Login to Docker Hub
+                                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-        stage('Push Docker Images') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    script {
-                        try {
-                            sh """
-                                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                                docker push ${QR_CODE_ATTENDANCE_IMAGE}:latest
-                                docker push ${ATTENDANCE_SERVICE_IMAGE}:latest
-                                docker push ${FACE_RECOGNITION_IMAGE}:latest
-                                docker push ${EUREKA_SERVER_IMAGE}:latest
-                                docker push ${FRONTEND_IMAGE}:latest
-                            """
-                        } catch (err) {
-                            echo "Docker push failed: ${err}"
-                            currentBuild.result = 'FAILURE'
-                            error("Docker push stage failed")
+                                    # Pre-pull base images to avoid timeout during build
+                                    echo "Pre-pulling base images..."
+                                    docker pull python:3.9-slim || docker pull python:3.9 || echo "Using fallback"
+                                    docker pull node:16-alpine || echo "Node image not needed"
+                                    docker pull openjdk:11-jre-slim || echo "Java image not needed"
+                                '''
+                            }
                         }
                     }
                 }
-            }
-        }
+
+                stage('Build Docker Images') {
+                    parallel {
+                        stage('Build QR Code Service') {
+                            steps {
+                                script {
+                                    echo "Building QR Code Attendance Service..."
+                                    sh """
+                                        docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:${BUILD_NUMBER} \
+                                                     -t ${QR_CODE_ATTENDANCE_IMAGE}:latest \
+                                                     ./QR_code_attendance
+                                    """
+                                }
+                            }
+                        }
+                        stage('Build Attendance Service') {
+                            steps {
+                                script {
+                                    echo "Building Attendance Service..."
+                                    sh """
+                                        docker build -t ${ATTENDANCE_SERVICE_IMAGE}:${BUILD_NUMBER} \
+                                                     -t ${ATTENDANCE_SERVICE_IMAGE}:latest \
+                                                     ./Attendance_service
+                                    """
+                                }
+                            }
+                        }
+                        stage('Build Face Recognition Service') {
+                            steps {
+                                script {
+                                    echo "Building Face Recognition Service..."
+                                    sh """
+                                        docker build -t ${FACE_RECOGNITION_IMAGE}:${BUILD_NUMBER} \
+                                                     -t ${FACE_RECOGNITION_IMAGE}:latest \
+                                                     ./face-recognition-service
+                                    """
+                                }
+                            }
+                        }
+                        stage('Build Eureka Server') {
+                            steps {
+                                script {
+                                    echo "Building Eureka Server..."
+                                    sh """
+                                        docker build -t ${EUREKA_SERVER_IMAGE}:${BUILD_NUMBER} \
+                                                     -t ${EUREKA_SERVER_IMAGE}:latest \
+                                                     ./Server_registry
+                                    """
+                                }
+                            }
+                        }
+                        stage('Build Frontend') {
+                            steps {
+                                script {
+                                    echo "Building Frontend..."
+                                    sh """
+                                        docker build -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} \
+                                                     -t ${FRONTEND_IMAGE}:latest \
+                                                     ./frontend
+                                    """
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Test Images') {
+                    steps {
+                        script {
+                            echo "Verifying built images..."
+                            sh """
+                                docker images | grep ${DOCKER_REGISTRY}/
+
+                                # Basic image inspection
+                                docker inspect ${QR_CODE_ATTENDANCE_IMAGE}:latest > /dev/null
+                                docker inspect ${ATTENDANCE_SERVICE_IMAGE}:latest > /dev/null
+                                docker inspect ${FACE_RECOGNITION_IMAGE}:latest > /dev/null
+                                docker inspect ${EUREKA_SERVER_IMAGE}:latest > /dev/null
+                                docker inspect ${FRONTEND_IMAGE}:latest > /dev/null
+
+                                echo "All images built successfully"
+                            """
+                        }
+                    }
+                }
+
+                stage('Push Docker Images') {
+                    steps {
+                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            script {
+                                try {
+                                    echo "Pushing images to registry..."
+                                    sh """
+                                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                                        # Push both versioned and latest tags
+                                        docker push ${QR_CODE_ATTENDANCE_IMAGE}:${BUILD_NUMBER}
+                                        docker push ${QR_CODE_ATTENDANCE_IMAGE}:latest
+
+                                        docker push ${ATTENDANCE_SERVICE_IMAGE}:${BUILD_NUMBER}
+                                        docker push ${ATTENDANCE_SERVICE_IMAGE}:latest
+
+                                        docker push ${FACE_RECOGNITION_IMAGE}:${BUILD_NUMBER}
+                                        docker push ${FACE_RECOGNITION_IMAGE}:latest
+
+                                        docker push ${EUREKA_SERVER_IMAGE}:${BUILD_NUMBER}
+                                        docker push ${EUREKA_SERVER_IMAGE}:latest
+
+                                        docker push ${FRONTEND_IMAGE}:${BUILD_NUMBER}
+                                        docker push ${FRONTEND_IMAGE}:latest
+                                    """
+                                    echo "All images pushed successfully"
+                                } catch (err) {
+                                    echo "Docker push failed: ${err}"
+                                    currentBuild.result = 'FAILURE'
+                                    error("Docker push stage failed")
+                                }
+                            }
+                        }
+                    }
+                }
+
+//         stage('Push Docker Images') {
+//             steps {
+//                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+//                     script {
+//                         try {
+//                             sh """
+//                                 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+//                                 docker push ${QR_CODE_ATTENDANCE_IMAGE}:latest
+//                                 docker push ${ATTENDANCE_SERVICE_IMAGE}:latest
+//                                 docker push ${FACE_RECOGNITION_IMAGE}:latest
+//                                 docker push ${EUREKA_SERVER_IMAGE}:latest
+//                                 docker push ${FRONTEND_IMAGE}:latest
+//                             """
+//                         } catch (err) {
+//                             echo "Docker push failed: ${err}"
+//                             currentBuild.result = 'FAILURE'
+//                             error("Docker push stage failed")
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
 
     }
