@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'docker.io/juhir10'
         NAMESPACE = 'spe-final'
-        DOCKER_CREDENTIALS = 'docker-cress'
+        DOCKER_CREDENTIALS = 'docker-spe-final'
 
         QR_CODE_ATTENDANCE_IMAGE = "${DOCKER_REGISTRY}/qr-code-attendance"
         ATTENDANCE_SERVICE_IMAGE = "${DOCKER_REGISTRY}/attendance-service"
