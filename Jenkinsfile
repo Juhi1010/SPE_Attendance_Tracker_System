@@ -96,6 +96,28 @@ pipeline {
             }
         }
 
+       stage('Push Docker Images') {
+               steps {
+                   withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                       script {
+                           try {
+                               sh """
+                                   echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                                   docker push ${QR_CODE_ATTENDANCE_IMAGE}:latest
+                                   docker push ${ATTENDANCE_SERVICE_IMAGE}:latest
+                                   docker push ${FACE_RECOGNITION_IMAGE}:latest
+                                   docker push ${EUREKA_SERVER_IMAGE}:latest
+                                   docker push ${FRONTEND_IMAGE}:latest
+                               """
+                           } catch (err) {
+                               echo "Docker push failed: ${err}"
+                               currentBuild.result = 'FAILURE'
+                               error("Docker push stage failed")
+                           }
+                       }
+                   }
+               }
+           }
 
 
     }
