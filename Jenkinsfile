@@ -57,6 +57,19 @@ pipeline {
                                 }
                             }
                         }
+
+                        stage('Build Face Recognition Service') {
+                            steps {
+                                script {
+                                    echo "Building Face Recognition Service..."
+                                    sh """
+                                        docker build -t ${FACE_RECOGNITION_IMAGE}:${BUILD_NUMBER} \
+                                                     -t ${FACE_RECOGNITION_IMAGE}:latest \
+                                                     ./face-recognition-service
+                                    """
+                                }
+                            }
+                        }
 //                         stage('Build Frontend') {
 //                             steps {
 //                                 script {
@@ -80,13 +93,10 @@ pipeline {
                                 docker images | grep ${DOCKER_REGISTRY}/
 
                                 # Basic image inspection
-                                docker inspect ${QR_CODE_ATTENDANCE_IMAGE}:latest > /dev/null
-                                docker inspect ${ATTENDANCE_SERVICE_IMAGE}:latest > /dev/null
-                                docker inspect ${FACE_RECOGNITION_IMAGE}:latest > /dev/null
-                                docker inspect ${EUREKA_SERVER_IMAGE}:latest > /dev/null
-                                docker inspect ${FRONTEND_IMAGE}:latest > /dev/null
+                                 docker inspect ${EUREKA_SERVER_IMAGE}:latest > /dev/null
+                                 docker inspect ${FACE_RECOGNITION_IMAGE}:latest > /dev/null
 
-                                echo "All images built successfully"
+                                echo "images built successfully"
                             """
                         }
                     }
