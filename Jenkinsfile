@@ -293,9 +293,9 @@ pipeline {
                         kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=120s
 
                         echo "Deploying Attendance Service..."
-                        kubectl apply -f k8s/attendance/deployment.yaml -n ${NAMESPACE}
-                        kubectl apply -f k8s/attendance/service.yaml -n ${NAMESPACE}
-                        kubectl apply -f k8s/attendance/hpa.yaml -n ${NAMESPACE}
+                        kubectl apply -f k8s/attendance-service/deployment.yaml -n ${NAMESPACE}
+                        kubectl apply -f k8s/attendance-service/service.yaml -n ${NAMESPACE}
+                        kubectl apply -f k8s/attendance-service/hpa.yaml -n ${NAMESPACE}
 
                         kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=120s
                     """
