@@ -118,6 +118,19 @@ pipeline {
 
 
         // Deployment stages
+
+        stage('Apply Secrets') {
+            steps {
+                script {
+                    sh """
+                        echo "Applying Kubernetes secrets..."
+                        export KUBECONFIG=\$HOME/.kube/config
+                        kubectl apply -f k8s/secrets/secrets.yaml -n ${NAMESPACE}
+                    """
+                }
+            }
+        }
+
         stage('Deploy PostgreSQL to Kubernetes') {
             steps {
                 script {
