@@ -101,6 +101,7 @@ pipeline {
                         }
                     }
                 }
+        }
 
 
 //         stage('Push Docker Images') {
