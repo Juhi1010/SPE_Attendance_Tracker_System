@@ -268,7 +268,7 @@ pipeline {
                         export KUBECONFIG=\$HOME/.kube/config
 
                         kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=120s
-                        kubectl rollout status deployment/eureka-server -n ${NAMESPACE} --timeout=120s
+                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=120s
 
                         echo "Deploying Face Recognition Service..."
                         kubectl apply -f k8s/face-recognition-service/deployment.yaml -n ${NAMESPACE}
@@ -289,7 +289,7 @@ pipeline {
                         export KUBECONFIG=\$HOME/.kube/config
 
                         kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=120s
-                        kubectl rollout status deployment/server-registry -n ${NAMESPACE} --timeout=120s
+                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=120s
                         kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=120s
 
                         echo "Deploying Attendance Service..."
@@ -310,7 +310,7 @@ pipeline {
                         echo "Waiting for dependent services to be ready..."
                         export KUBECONFIG=\$HOME/.kube/config
 
-                        kubectl rollout status deployment/server-registry -n ${NAMESPACE} --timeout=120s
+                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=120s
                         kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=120s
                         kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=120s
                         kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=120s
@@ -333,7 +333,7 @@ pipeline {
                         echo "Waiting for all dependent services to be ready..."
                         export KUBECONFIG=\$HOME/.kube/config
 
-                        kubectl rollout status deployment/server-registry -n ${NAMESPACE} --timeout=120s
+                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=120s
                         kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=120s
                         kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=120s
                         kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=120s
