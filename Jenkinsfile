@@ -44,43 +44,7 @@ pipeline {
                 }
 
                 stage('Build Docker Images') {
-                    parallel {
-                        stage('Build QR Code Service') {
-                            steps {
-                                script {
-                                    echo "Building QR Code Attendance Service..."
-                                    sh """
-                                        docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:${BUILD_NUMBER} \
-                                                     -t ${QR_CODE_ATTENDANCE_IMAGE}:latest \
-                                                     ./QR_code_attendance
-                                    """
-                                }
-                            }
-                        }
-                        stage('Build Attendance Service') {
-                            steps {
-                                script {
-                                    echo "Building Attendance Service..."
-                                    sh """
-                                        docker build -t ${ATTENDANCE_SERVICE_IMAGE}:${BUILD_NUMBER} \
-                                                     -t ${ATTENDANCE_SERVICE_IMAGE}:latest \
-                                                     ./Attendance_service
-                                    """
-                                }
-                            }
-                        }
-                        stage('Build Face Recognition Service') {
-                            steps {
-                                script {
-                                    echo "Building Face Recognition Service..."
-                                    sh """
-                                        docker build -t ${FACE_RECOGNITION_IMAGE}:${BUILD_NUMBER} \
-                                                     -t ${FACE_RECOGNITION_IMAGE}:latest \
-                                                     ./face-recognition-service
-                                    """
-                                }
-                            }
-                        }
+
                         stage('Build Eureka Server') {
                             steps {
                                 script {
@@ -93,19 +57,18 @@ pipeline {
                                 }
                             }
                         }
-                        stage('Build Frontend') {
-                            steps {
-                                script {
-                                    echo "Building Frontend..."
-                                    sh """
-                                        docker build -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} \
-                                                     -t ${FRONTEND_IMAGE}:latest \
-                                                     ./frontend
-                                    """
-                                }
-                            }
-                        }
-                    }
+//                         stage('Build Frontend') {
+//                             steps {
+//                                 script {
+//                                     echo "Building Frontend..."
+//                                     sh """
+//                                         docker build -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} \
+//                                                      -t ${FRONTEND_IMAGE}:latest \
+//                                                      ./frontend
+//                                     """
+//                                 }
+//                             }
+//                         }
                 }
 
                 stage('Test Images') {
@@ -128,41 +91,6 @@ pipeline {
                     }
                 }
 
-                stage('Push Docker Images') {
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            script {
-                                try {
-                                    echo "Pushing images to registry..."
-                                    sh """
-                                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-
-                                        # Push both versioned and latest tags
-                                        docker push ${QR_CODE_ATTENDANCE_IMAGE}:${BUILD_NUMBER}
-                                        docker push ${QR_CODE_ATTENDANCE_IMAGE}:latest
-
-                                        docker push ${ATTENDANCE_SERVICE_IMAGE}:${BUILD_NUMBER}
-                                        docker push ${ATTENDANCE_SERVICE_IMAGE}:latest
-
-                                        docker push ${FACE_RECOGNITION_IMAGE}:${BUILD_NUMBER}
-                                        docker push ${FACE_RECOGNITION_IMAGE}:latest
-
-                                        docker push ${EUREKA_SERVER_IMAGE}:${BUILD_NUMBER}
-                                        docker push ${EUREKA_SERVER_IMAGE}:latest
-
-                                        docker push ${FRONTEND_IMAGE}:${BUILD_NUMBER}
-                                        docker push ${FRONTEND_IMAGE}:latest
-                                    """
-                                    echo "All images pushed successfully"
-                                } catch (err) {
-                                    echo "Docker push failed: ${err}"
-                                    currentBuild.result = 'FAILURE'
-                                    error("Docker push stage failed")
-                                }
-                            }
-                        }
-                    }
-                }
 
 //         stage('Push Docker Images') {
 //             steps {
@@ -188,23 +116,25 @@ pipeline {
 //         }
 
 
+
+
     }
 
-    post {
-        failure {
-            echo "Deployment failed! Fetching pod info for debugging..."
-            script {
-                sh '''
-                    export KUBECONFIG=$HOME/.kube/config
-                    kubectl get pods --namespace ${NAMESPACE}
-                    kubectl describe pods --namespace ${NAMESPACE}
-                '''
-            }
-        }
-        success {
-            echo "Pipeline success"
-        }
-    }
+//     post {
+//         failure {
+//             echo "Deployment failed! Fetching pod info for debugging..."
+//             script {
+//                 sh '''
+//                     export KUBECONFIG=$HOME/.kube/config
+//                     kubectl get pods --namespace ${NAMESPACE}
+//                     kubectl describe pods --namespace ${NAMESPACE}
+//                 '''
+//             }
+//         }
+//         success {
+//             echo "Pipeline success"
+//         }
+//     }
 
 
 }
