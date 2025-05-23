@@ -20,6 +20,18 @@ pipeline {
             }
         }
 
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    script {
+                        sh '''
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Images') {
             steps {
                 sh "docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:latest ./QR_code_attendance"
