@@ -40,113 +40,69 @@ pipeline {
                     }
                 }
 
-                stage('Build Docker Images') {
-                        stages {
-                        stage('Build Eureka Server') {
-                            steps {
-                                script {
-                                    echo "Building Eureka Server..."
-                                    sh """
-                                        docker build -t ${EUREKA_SERVER_IMAGE}:${BUILD_NUMBER} \
-                                                     -t ${EUREKA_SERVER_IMAGE}:latest \
-                                                     ./Server_registry
-                                    """
-                                }
-                            }
-                        }
 
 
-                        stage('Build QR Code Service') {
-                            steps {
-                                script {
-                                    echo "Building QR Code Attendance Service..."
-                                    sh """
-                                        docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:${BUILD_NUMBER} \
-                                                     -t ${QR_CODE_ATTENDANCE_IMAGE}:latest \
-                                                     ./QR_code_attendance
-                                    """
-                                }
-                            }
-                        }
-                        stage('Build Attendance Service') {
-                            steps {
-                                script {
-                                    echo "Building Attendance Service..."
-                                    sh """
-                                        docker build -t ${ATTENDANCE_SERVICE_IMAGE}:${BUILD_NUMBER} \
-                                                     -t ${ATTENDANCE_SERVICE_IMAGE}:latest \
-                                                     ./Attendance_service
-                                    """
-                                }
-                            }
-                        }
-
+        stage('Build Eureka Server') {
+            steps {
+                script {
+                    echo "Building Eureka Server..."
+                    sh """
+                        docker build -t ${EUREKA_SERVER_IMAGE}:${BUILD_NUMBER} \
+                                     -t ${EUREKA_SERVER_IMAGE}:latest \
+                                     ./Server_registry
+                    """
                 }
-
-
-                stage('Test Images') {
-                    steps {
-                        script {
-                            echo "Verifying built images..."
-                            sh """
-                                docker images | grep ${DOCKER_REGISTRY}/
-
-                                # Basic image inspection
-                                 docker inspect ${EUREKA_SERVER_IMAGE}:latest > /dev/null
-                                 docker inspect ${QR_CODE_ATTENDANCE_IMAGE}:latest > /dev/null
-                                 docker inspect ${ATTENDANCE_SERVICE_IMAGE}:latest > /dev/null
-
-                                echo "images built successfully"
-                            """
-                        }
-                    }
-                }
+            }
         }
 
 
-//         stage('Push Docker Images') {
-//             steps {
-//                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-//                     script {
-//                         try {
-//                             sh """
-//                                 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-//                                 docker push ${QR_CODE_ATTENDANCE_IMAGE}:latest
-//                                 docker push ${ATTENDANCE_SERVICE_IMAGE}:latest
-//                                 docker push ${FACE_RECOGNITION_IMAGE}:latest
-//                                 docker push ${EUREKA_SERVER_IMAGE}:latest
-//                                 docker push ${FRONTEND_IMAGE}:latest
-//                             """
-//                         } catch (err) {
-//                             echo "Docker push failed: ${err}"
-//                             currentBuild.result = 'FAILURE'
-//                             error("Docker push stage failed")
-//                         }
-//                     }
-//                 }
-//             }
-//         }
+        stage('Build QR Code Service') {
+            steps {
+                script {
+                    echo "Building QR Code Attendance Service..."
+                    sh """
+                        docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:${BUILD_NUMBER} \
+                                     -t ${QR_CODE_ATTENDANCE_IMAGE}:latest \
+                                     ./QR_code_attendance
+                    """
+                }
+            }
+        }
+
+
+        stage('Build Attendance Service') {
+            steps {
+                script {
+                    echo "Building Attendance Service..."
+                    sh """
+                        docker build -t ${ATTENDANCE_SERVICE_IMAGE}:${BUILD_NUMBER} \
+                                     -t ${ATTENDANCE_SERVICE_IMAGE}:latest \
+                                     ./Attendance_service
+                    """
+                }
+            }
+        }
 
 
 
+        stage('Test Images') {
+            steps {
+                script {
+                    echo "Verifying built images..."
+                    sh """
+                        docker images | grep ${DOCKER_REGISTRY}/
 
+                        # Basic image inspection
+                         docker inspect ${EUREKA_SERVER_IMAGE}:latest > /dev/null
+                         docker inspect ${QR_CODE_ATTENDANCE_IMAGE}:latest > /dev/null
+                         docker inspect ${ATTENDANCE_SERVICE_IMAGE}:latest > /dev/null
+
+                        echo "images built successfully"
+                    """
+                }
+            }
+        }
     }
-
-//     post {
-//         failure {
-//             echo "Deployment failed! Fetching pod info for debugging..."
-//             script {
-//                 sh '''
-//                     export KUBECONFIG=$HOME/.kube/config
-//                     kubectl get pods --namespace ${NAMESPACE}
-//                     kubectl describe pods --namespace ${NAMESPACE}
-//                 '''
-//             }
-//         }
-//         success {
-//             echo "Pipeline success"
-//         }
-//     }
 
 
 }
