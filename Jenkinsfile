@@ -44,7 +44,7 @@ pipeline {
                 }
 
                 stage('Build Docker Images') {
-
+                        stages {
                         stage('Build Eureka Server') {
                             steps {
                                 script {
@@ -69,6 +69,7 @@ pipeline {
 //                                 }
 //                             }
 //                         }
+                    }
                 }
 
                 stage('Test Images') {
