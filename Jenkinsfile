@@ -53,58 +53,25 @@ pipeline {
             }
         }
 
-            // No need for sed or image tag update stage
-            // Just make sure your deployment YAMLs already use ":latest"
-            /*
-            Example:
-            image: docker.io/juhir10/qr-code-attendance:latest
-            */
 
-            // Optional Deploy Stage (uncomment if ready to deploy)
-            /*
-            stage('Deploy to Kubernetes') {
-                steps {
-                    script {
-                        sh """
-                            export KUBECONFIG=$HOME/.kube/config
-                            kubectl apply -f k8s/ --namespace ${NAMESPACE}
+    }
 
-                            deployments=(
-                                "eureka-server-deployment"
-                                "postgres-deployment"
-                                "face-recognition-service"
-                                "attendance-service"
-                                "qr-code-attendance"
-                                "frontend"
-                            )
-
-                            for deploy in "\${deployments[@]}"; do
-                                echo "Waiting for rollout of deployment/\${deploy} in namespace ${NAMESPACE}"
-                                kubectl rollout status deployment/\${deploy} --namespace ${NAMESPACE} --timeout=180s
-                            done
-                        """
-                    }
-                }
-            }
-            */
-        }
-
-        post {
-            failure {
-                echo "Deployment failed! Fetching pod info for debugging..."
-                script {
-                    sh '''
-                        export KUBECONFIG=$HOME/.kube/config
-                        kubectl get pods --namespace ${NAMESPACE}
-                        kubectl describe pods --namespace ${NAMESPACE}
-                    '''
-                }
-            }
-            success {
-                echo "Pipeline success"
+    post {
+        failure {
+            echo "Deployment failed! Fetching pod info for debugging..."
+            script {
+                sh '''
+                    export KUBECONFIG=$HOME/.kube/config
+                    kubectl get pods --namespace ${NAMESPACE}
+                    kubectl describe pods --namespace ${NAMESPACE}
+                '''
             }
         }
-   }
+        success {
+            echo "Pipeline success"
+        }
+    }
+
 
 }
 
