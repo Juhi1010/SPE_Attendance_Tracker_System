@@ -43,6 +43,7 @@ spec:
       containers:
         - name: face-container-service
           image: juhir10/face-recognition-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5001
           readinessProbe:

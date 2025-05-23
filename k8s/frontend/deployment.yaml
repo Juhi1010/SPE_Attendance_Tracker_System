@@ -52,6 +52,7 @@ spec:
       containers:
         - name: frontend
           image: juhir10/frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           livenessProbe:

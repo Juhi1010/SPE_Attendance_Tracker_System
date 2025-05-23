@@ -1,43 +1,8 @@
-#apiVersion: v1
-#kind: PersistentVolume
-#metadata:
-#  name: postgres-pv
-#spec:
-#  capacity:
-#    storage: 5Gi
-#  accessModes:
-#    - ReadWriteOnce
-#  hostPath:
-#    path: "/mnt/data/postgres"
-#---
-#apiVersion: v1
-#kind: PersistentVolumeClaim
-#metadata:
-#  name: postgres-pvc
-#  namespace: qr-attendance
-#spec:
-#  accessModes:
-#    - ReadWriteOnce
-#  resources:
-#    requests:
-#      storage: 5Gi
-#---
-#apiVersion: v1
-#kind: Secret
-#metadata:
-#  name: postgres-secret
-#
-#type: Opaque
-#data:
-#  POSTGRES_USER: anVoaXJhamFuaQ==       # juhirajani (base64)
-#  POSTGRES_PASSWORD: anVoaTEyMw==       # juhi123 (base64)
-#---
 #apiVersion: apps/v1
 #kind: Deployment
 #metadata:
 #  name: postgres-deployment
-#  labels:
-#    app: postgres
+#  namespace: spe-final
 #spec:
 #  replicas: 1
 #  selector:
@@ -57,47 +22,24 @@
 #            - name: POSTGRES_DB
 #              value: attendance
 #            - name: POSTGRES_USER
-#              valueFrom:
-#                secretKeyRef:
-#                  name: postgres-secret
-#                  key: POSTGRES_USER
+#              value: juhirajani
 #            - name: POSTGRES_PASSWORD
-#              valueFrom:
-#                secretKeyRef:
-#                  name: postgres-secret
-#                  key: POSTGRES_PASSWORD
-#          volumeMounts:
-#            - mountPath: /var/lib/postgresql/data
-#              name: postgres-storage
+#              value: juhi123
+#          livenessProbe:
+#            exec:
+#              command: ["pg_isready", "-U", "juhirajani", "-d", "attendance"]
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#            timeoutSeconds: 5
+#            failureThreshold: 5
 #          readinessProbe:
 #            exec:
-#              command:
-#                - pg_isready
-#                - -U
-#                - juhirajani
-#                - -d
-#                - attendance
+#              command: ["pg_isready", "-U", "juhirajani", "-d", "attendance"]
 #            initialDelaySeconds: 10
-#            periodSeconds: 30
-#            timeoutSeconds: 10
+#            periodSeconds: 10
+#            timeoutSeconds: 5
 #            failureThreshold: 5
-#      volumes:
-#        - name: postgres-storage
-#          persistentVolumeClaim:
-#            claimName: postgres-pvc
-#---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: postgres-service
-#spec:
-#  selector:
-#    app: postgres
-#  ports:
-#    - protocol: TCP
-#      port: 5432
-#      targetPort: 5432
-#  clusterIP: None  # Use headless service if needed, or remove for standard ClusterIP
+
 
 apiVersion: apps/v1
 kind: Deployment
@@ -117,15 +59,25 @@ spec:
       containers:
         - name: postgres-container
           image: postgres:13
+          imagePullPolicy: Always
           ports:
             - containerPort: 5432
           env:
             - name: POSTGRES_DB
-              value: attendance
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_DB
             - name: POSTGRES_USER
-              value: juhirajani
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
-              value: juhi123
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
           livenessProbe:
             exec:
               command: ["pg_isready", "-U", "juhirajani", "-d", "attendance"]
@@ -140,5 +92,4 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 5
-
 

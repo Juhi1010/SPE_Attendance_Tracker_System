@@ -168,12 +168,21 @@ spec:
           ports:
             - containerPort: 8082
           env:
-            - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres-service:5432/attendance
-            - name: SPRING_DATASOURCE_USERNAME
-              value: juhirajani
-            - name: SPRING_DATASOURCE_PASSWORD
-              value: juhi123
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: http://server-registry:8761/eureka
           readinessProbe:
