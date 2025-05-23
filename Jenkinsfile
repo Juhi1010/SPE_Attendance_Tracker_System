@@ -83,25 +83,21 @@ pipeline {
             }
         }
 
-
-
-        stage('Test Images') {
+        stage('Build Frontend') {
             steps {
                 script {
-                    echo "Verifying built images..."
+                    echo "Building Frontend..."
                     sh """
-                        docker images | grep ${DOCKER_REGISTRY}/
-
-                        # Basic image inspection
-                         docker inspect ${EUREKA_SERVER_IMAGE}:latest > /dev/null
-                         docker inspect ${QR_CODE_ATTENDANCE_IMAGE}:latest > /dev/null
-                         docker inspect ${ATTENDANCE_SERVICE_IMAGE}:latest > /dev/null
-
-                        echo "images built successfully"
+                        docker build -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} \
+                                     -t ${FRONTEND_IMAGE}:latest \
+                                     ./frontend
                     """
                 }
             }
         }
+
+
+
     }
 
 
