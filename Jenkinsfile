@@ -183,16 +183,16 @@ pipeline {
                         echo "Waiting for PostgreSQL, Eureka, Face Recognition Service..."
                         export KUBECONFIG=\$HOME/.kube/config
 
-                        kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=300s
+                        kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=500s
 
                         echo "Deploying Attendance Service..."
                         kubectl apply -f k8s/attendance-service/deployment.yaml -n ${NAMESPACE}
                         kubectl apply -f k8s/attendance-service/service.yaml -n ${NAMESPACE}
                         kubectl apply -f k8s/attendance-service/hpa.yaml -n ${NAMESPACE}
 
-                        kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=300s
+                        kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=500s
                     """
                 }
             }
@@ -205,17 +205,17 @@ pipeline {
                         echo "Waiting for dependent services to be ready..."
                         export KUBECONFIG=\$HOME/.kube/config
 
-                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=300s
+                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=500s
 
                         echo "Deploying QR Code Attendance Service..."
                         kubectl apply -f k8s/qr-code-attendance/deployment.yaml -n ${NAMESPACE}
                         kubectl apply -f k8s/qr-code-attendance/service.yaml -n ${NAMESPACE}
                         kubectl apply -f k8s/qr-code-attendance/hpa.yaml -n ${NAMESPACE}
 
-                        kubectl rollout status deployment/qr-code-attendance -n ${NAMESPACE} --timeout=300s
+                        kubectl rollout status deployment/qr-code-attendance -n ${NAMESPACE} --timeout=500s
                     """
                 }
             }
@@ -228,18 +228,18 @@ pipeline {
                         echo "Waiting for all dependent services to be ready..."
                         export KUBECONFIG=\$HOME/.kube/config
 
-                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=300s
-                        kubectl rollout status deployment/qr-code-attendance -n ${NAMESPACE} --timeout=300s
+                        kubectl rollout status deployment/eureka-server-deployment -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/face-recognition-service -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/postgres-deployment -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/attendance-service -n ${NAMESPACE} --timeout=500s
+                        kubectl rollout status deployment/qr-code-attendance -n ${NAMESPACE} --timeout=500s
 
                         echo "Deploying Frontend Service..."
                         kubectl apply -f k8s/frontend/deployment.yaml -n ${NAMESPACE}
                         kubectl apply -f k8s/frontend/service.yaml -n ${NAMESPACE}
                         kubectl apply -f k8s/frontend/hpa.yaml -n ${NAMESPACE} || echo "No HPA defined for frontend"
 
-                        kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=300s
+                        kubectl rollout status deployment/frontend -n ${NAMESPACE} --timeout=500s
                     """
                 }
             }
