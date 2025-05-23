@@ -25,9 +25,6 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                             script {
                                 sh '''
-                                    # Clear Docker cache
-                                    docker system prune -f || true
-                                    docker buildx prune -f || true
 
                                     # Login to Docker Hub
                                     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
@@ -58,32 +55,33 @@ pipeline {
                             }
                         }
 
-                        stage('Build Face Recognition Service') {
+
+                        stage('Build QR Code Service') {
                             steps {
                                 script {
-                                    echo "Building Face Recognition Service..."
+                                    echo "Building QR Code Attendance Service..."
                                     sh """
-                                        docker build -t ${FACE_RECOGNITION_IMAGE}:${BUILD_NUMBER} \
-                                                     -t ${FACE_RECOGNITION_IMAGE}:latest \
-                                                     ./face-recognition-service
+                                        docker build -t ${QR_CODE_ATTENDANCE_IMAGE}:${BUILD_NUMBER} \
+                                                     -t ${QR_CODE_ATTENDANCE_IMAGE}:latest \
+                                                     ./QR_code_attendance
                                     """
                                 }
                             }
                         }
-//                         stage('Build Frontend') {
-//                             steps {
-//                                 script {
-//                                     echo "Building Frontend..."
-//                                     sh """
-//                                         docker build -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} \
-//                                                      -t ${FRONTEND_IMAGE}:latest \
-//                                                      ./frontend
-//                                     """
-//                                 }
-//                             }
-//                         }
-                    }
-                }
+                        stage('Build Attendance Service') {
+                            steps {
+                                script {
+                                    echo "Building Attendance Service..."
+                                    sh """
+                                        docker build -t ${ATTENDANCE_SERVICE_IMAGE}:${BUILD_NUMBER} \
+                                                     -t ${ATTENDANCE_SERVICE_IMAGE}:latest \
+                                                     ./Attendance_service
+                                    """
+                                }
+                            }
+                        }
+
+
 
                 stage('Test Images') {
                     steps {
@@ -94,7 +92,8 @@ pipeline {
 
                                 # Basic image inspection
                                  docker inspect ${EUREKA_SERVER_IMAGE}:latest > /dev/null
-                                 docker inspect ${FACE_RECOGNITION_IMAGE}:latest > /dev/null
+                                 docker inspect ${QR_CODE_ATTENDANCE_IMAGE}:latest > /dev/null
+                                 docker inspect ${ATTENDANCE_SERVICE_IMAGE}:latest > /dev/null
 
                                 echo "images built successfully"
                             """
